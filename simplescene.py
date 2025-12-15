@@ -58,9 +58,9 @@ def draw_scene():
     # Draw a green sign 10 units in front of z that's
     # oriented from north to south
     draw_sign(scene, 0, -10, False, 0, 255, 0)  # Green (0, 255, 0)
-
-    # Draw a shiny, stone-like, yellow Homer Simpson
-    scene.add_mesh("meshes/homer.obj", 1, 1.4, -7, 0, 0, 0, 1, 1, 1, 255, 255, 0, 1, 1)
+    
+    # Draw a cyan cow and a smokestack
+    scene.add_mesh("meshes/cow.obj", 1, 1, -7, 0, 0, 0, 1, 1, 1, 0, 255, 255, 1, 0)
     scene.add_textured_mesh("meshes/smokestack/medres.obj", "meshes/smokestack/medres.mtl",
                             0, 18, -20, 0, 180, 0, 10, 10, 10, 0)
 
