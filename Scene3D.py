@@ -49,8 +49,8 @@ HTML_END = '''<table cellpadding>
                 <li><b>S:</b> Backwards</li>
                 <li><b>A:</b> Left</li>
                 <li><b>D:</b> Right</li>
-                <li><b>E:</b> Up</li>
-                <li><b>C:</b> Down</li>
+                <li><b>E / Spacebar:</b> Up</li>
+                <li><b>C / Shift:</b> Down</li>
             </ul>
         </td>
     </tr>
@@ -59,9 +59,211 @@ HTML_END = '''<table cellpadding>
 </html>'''
 
 
+class Group:
+    """
+    A group for hierarchical transformations. Shapes added to a group
+    will rotate together around the group's center.
+    """
+    def __init__(self, scene, group_id):
+        self._scene = scene
+        self._group_id = group_id
+
+    def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
+                roughness, metalness, rx=0, ry=0, rz=0):
+        """
+        Add a box to the group
+
+        Args:
+            cx: X center of box (relative to group center)
+            cy: Y center of box (relative to group center)
+            cz: Z center of box (relative to group center)
+            xlen: Length of box along x-axis
+            ylen: Length of box along y-axis
+            zlen: Length of box along z-axis
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+        """
+        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
+
+    def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
+                     roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+        """
+        Add a cylinder to the group
+
+        Args:
+            cx: X center of cylinder (relative to group center)
+            cy: Y center of cylinder (relative to group center)
+            cz: Z center of cylinder (relative to group center)
+            radius: Radius of the cylinder
+            height: Height of the cylinder
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+            sx: Scale about x-axis (default 1)
+            sy: Scale about y-axis (default 1)
+            sz: Scale about z-axis (default 1)
+        """
+        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
+
+    def add_cone(self, cx, cy, cz, radius, height, r, g, b,
+                 roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+        """
+        Add a cone to the group
+
+        Args:
+            cx: X center of cone (relative to group center)
+            cy: Y center of cone (relative to group center)
+            cz: Z center of cone (relative to group center)
+            radius: Radius of the cone
+            height: Height of the cone
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+            sx: Scale about x-axis (default 1)
+            sy: Scale about y-axis (default 1)
+            sz: Scale about z-axis (default 1)
+        """
+        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
+
+    def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
+                      roughness, metalness, rx=0, ry=0, rz=0):
+        """
+        Add an ellipsoid to the group
+
+        Args:
+            cx: X center of ellipsoid (relative to group center)
+            cy: Y center of ellipsoid (relative to group center)
+            cz: Z center of ellipsoid (relative to group center)
+            radx: Semi-axis x radius
+            rady: Semi-axis y radius
+            radz: Semi-axis z radius
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+        """
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
+
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness, metalness):
+        """
+        Add a sphere to the group
+
+        Args:
+            cx: X center of the sphere (relative to group center)
+            cy: Y center of the sphere (relative to group center)
+            cz: Z center of the sphere (relative to group center)
+            radius: Radius of the sphere
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+        """
+        # Call add_ellipsoid directly with group_id
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id});\n"
+
+    def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
+                 roughness, metalness):
+        """
+        Add a mesh to the group
+
+        Args:
+            path: File path to special mesh, relative to this directory
+            cx: Offset in x (relative to group center)
+            cy: Offset in y (relative to group center)
+            cz: Offset in z (relative to group center)
+            rx: Rotation around x-axis
+            ry: Rotation around y-axis
+            rz: Rotation around z-axis
+            sx: Scale along x-axis
+            sy: Scale along y-axis
+            sz: Scale along z-axis
+            r: Red component in [0, 255]
+            g: Green component in [0, 255]
+            b: Blue component in [0, 255]
+            roughness: How rough the material appears. 0.0 means a smooth mirror
+                       reflection, 1.0 means fully diffuse.
+            metalness: How much the material is like a metal. Non-metallic materials
+                       such as wood or stone use 0.0, metallic use 1.0.
+        """
+        self._scene._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness},{self._group_id});\n'
+
+    def add_textured_mesh(self, path, matpath, cx, cy, cz, rx, ry, rz,
+                          sx, sy, sz, shininess):
+        """
+        Add a textured mesh to the group
+
+        Args:
+            path: File path to mesh, relative to this directory
+            matpath: File path to material, relative to this directory
+            cx: Offset in x (relative to group center)
+            cy: Offset in y (relative to group center)
+            cz: Offset in z (relative to group center)
+            rx: Rotation around x-axis
+            ry: Rotation around y-axis
+            rz: Rotation around z-axis
+            sx: Scale along x-axis
+            sy: Scale along y-axis
+            sz: Scale along z-axis
+            shininess: A number in [0, 255] describing how shiny the mesh is
+        """
+        self._scene._scene_code += f'canvas.addTexturedMesh("{path}","{matpath}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{shininess},{self._group_id});\n'
+
+    def add_group(self, cx, cy, cz, rx=0, ry=0, rz=0):
+        """
+        Create a nested group (group within this group) for hierarchical transformations
+
+        Args:
+            cx: X position of group center (relative to parent group center)
+            cy: Y position of group center (relative to parent group center)
+            cz: Z position of group center (relative to parent group center)
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+
+        Returns:
+            Group object that can be used to add shapes to this nested group
+        """
+        child_group_id = self._scene._next_group_id
+        self._scene._next_group_id += 1
+        self._scene._scene_code += f"canvas.addGroupToGroup({child_group_id},{self._group_id},{cx},{cy},{cz},{rx},{ry},{rz});\n"
+        return Group(self._scene, child_group_id)
+
+
 class Scene3D:
     def __init__(self):
         self._scene_code = "let canvas = new SceneCanvas();\n"
+        self._next_group_id = 0
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
                 roughness, metalness, rx=0, ry=0, rz=0):
@@ -277,6 +479,26 @@ class Scene3D:
             intensity: The intensity of the light, in [0, 1]
         """
         self._scene_code += f"canvas.addDirectionalLight({x},{y},{z},{r},{g},{b},{intensity});\n"
+
+    def add_group(self, cx, cy, cz, rx=0, ry=0, rz=0):
+        """
+        Create a group for hierarchical transformations
+
+        Args:
+            cx: X position of group center
+            cy: Y position of group center
+            cz: Z position of group center
+            rx: Rotation about x-axis, in degrees (default 0)
+            ry: Rotation about y-axis, in degrees (default 0)
+            rz: Rotation about z-axis, in degrees (default 0)
+
+        Returns:
+            Group object that can be used to add shapes to this group
+        """
+        group_id = self._next_group_id
+        self._next_group_id += 1
+        self._scene_code += f"canvas.addGroup({group_id},{cx},{cy},{cz},{rx},{ry},{rz});\n"
+        return Group(self, group_id)
 
     def save_scene(self, filename, scene_name):
         """
