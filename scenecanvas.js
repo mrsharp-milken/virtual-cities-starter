@@ -7,7 +7,7 @@ function getMaterialPrefix(r, g, b, roughness, metalness) {
 
 /**
  * Convert a hex color string to an array of floating point numbers in [0, 1]
- * 
+ *
  * @param {string} s 6 character string
  */
 function colorFloatFromHex(s) {
@@ -46,6 +46,7 @@ class SceneCanvas {
             winFac = 0.8;
         }
         this.materials = {};
+        this.groups = {};
         const renderer = new THREE.WebGLRenderer({antialias:true});
         let W = Math.round(window.innerWidth*winFac);
         let H = Math.round(window.innerHeight*winFac);
@@ -78,7 +79,7 @@ class SceneCanvas {
         this.justClicked = false;
         this.invertYAxis = false;
         this.clickType = "LEFT";
-        
+
         // Keyboard variables
         this.walkspeed = 2.5;//How many meters per second
         this.lastTime = (new Date()).getTime();
@@ -98,7 +99,7 @@ class SceneCanvas {
         glcanvas.addEventListener('touchmove', this.clickerDragged.bind(this));
 
         //Keyboard listener
-        this.keysDown = {87:false, 83:false, 65:false, 68:false, 67:false, 69:false};
+        this.keysDown = {87:false, 83:false, 65:false, 68:false, 67:false, 69:false, 32:false, 16:false};
         document.addEventListener('keydown', this.keyDown.bind(this), true);
         document.addEventListener('keyup', this.keyUp.bind(this), true);
     }
@@ -110,7 +111,7 @@ class SceneCanvas {
 
     /**
      * Extract x/y position from a mouse event
-     * @param {mouse event} evt 
+     * @param {mouse event} evt
      * @returns {object} The X/Y coordinates
      */
     getMousePos(evt) {
@@ -125,10 +126,10 @@ class SceneCanvas {
             Y: evt.clientY
         };
     }
-    
+
     /**
      * React to a click being released
-     * @param {mouse event} evt 
+     * @param {mouse event} evt
      */
     releaseClick(evt) {
         evt.preventDefault();
@@ -137,11 +138,11 @@ class SceneCanvas {
             requestAnimFrame(this.repaint.bind(this));
         }
         return false;
-    } 
+    }
 
     /**
      * React to a mouse leaving the window
-     * @param {mouse event} evt 
+     * @param {mouse event} evt
      */
     mouseOut(evt) {
         this.dragging = false;
@@ -150,7 +151,7 @@ class SceneCanvas {
         }
         return false;
     }
-    
+
     /**
      * React to a click happening
      * @param {mouse event} e
@@ -176,11 +177,11 @@ class SceneCanvas {
             requestAnimFrame(this.repaint.bind(this));
         }
         return false;
-    } 
+    }
 
     /**
      * React to a mouse being dragged
-     * @param {mouse event} evt 
+     * @param {mouse event} evt
      */
     clickerDragged(evt) {
         evt.preventDefault();
@@ -239,7 +240,7 @@ class SceneCanvas {
 
     /**
      * React to a key being pressed
-     * @param {keyboard callback} evt 
+     * @param {keyboard callback} evt
      */
     keyDown(evt) {
         let newKeyDown = false;
@@ -285,15 +286,30 @@ class SceneCanvas {
                 this.moveud = 1;
             }
         }
+        else if (evt.keyCode == 32) { //Spacebar
+            evt.preventDefault(); // Prevent page scrolling
+            if (!this.keysDown[32]) {
+                newKeyDown = true;
+                this.keysDown[32] = true;
+                this.moveud = 1;
+            }
+        }
+        else if (evt.keyCode == 16) { //Left Shift
+            if (!this.keysDown[16]) {
+                newKeyDown = true;
+                this.keysDown[16] = true;
+                this.moveud = -1;
+            }
+        }
         this.lastTime = (new Date()).getTime();
         if (newKeyDown && this.repaintOnInteract) {
             requestAnimFrame(this.repaint.bind(this));
         }
     }
-    
+
     /**
      * React to a key being released
-     * @param {keyboard callback} evt 
+     * @param {keyboard callback} evt
      */
     keyUp(evt) {
         if (evt.keyCode == 87) { //W
@@ -313,14 +329,45 @@ class SceneCanvas {
             this.keysDown[68] = false;
         }
         else if (evt.keyCode == 67) { //C
-            this.moveud = 0;
             this.keysDown[67] = false;
+            // Recalculate moveud based on remaining keys
+            this.updateMoveUD();
         }
         else if (evt.keyCode == 69) { //E
-            this.moveud = 0;
             this.keysDown[69] = false;
+            // Recalculate moveud based on remaining keys
+            this.updateMoveUD();
         }
-    }   
+        else if (evt.keyCode == 32) { //Spacebar
+            this.keysDown[32] = false;
+            // Recalculate moveud based on remaining keys
+            this.updateMoveUD();
+        }
+        else if (evt.keyCode == 16) { //Left Shift
+            this.keysDown[16] = false;
+            // Recalculate moveud based on remaining keys
+            this.updateMoveUD();
+        }
+    }
+
+    /**
+     * Update the up/down movement value based on currently pressed keys
+     */
+    updateMoveUD() {
+        // Check for up keys (E or Spacebar)
+        const upPressed = this.keysDown[69] || this.keysDown[32];
+        // Check for down keys (C or Shift)
+        const downPressed = this.keysDown[67] || this.keysDown[16];
+
+        if (upPressed && !downPressed) {
+            this.moveud = 1;
+        } else if (downPressed && !upPressed) {
+            this.moveud = -1;
+        } else {
+            // Both pressed or neither pressed - cancel out or stop
+            this.moveud = 0;
+        }
+    }
 
     /////////////////////////////////////////////////////
     //                    MENUS                        //
@@ -405,7 +452,7 @@ class SceneCanvas {
                     // Remember which camera was used before so it can be restored
                     a.cameraBefore = canvas.camera;
                     canvas.camera = a.animCamera;
-                    a.gif = new GIF({workers: 2, quality: 10, 
+                    a.gif = new GIF({workers: 2, quality: 10,
                                     workerScript:"jsmodules/gif.worker.js",
                                     width:c.pixWidth, height:c.pixHeight});
                     a.gif.on('finished', function(blob) {
@@ -490,7 +537,7 @@ class SceneCanvas {
 
     /**
      * Setup menus to control positions and orientations of cameras
-     * 
+     *
      */
     addCameraToMenu(c, x, y, z) {
         const canvas = this;
@@ -568,7 +615,7 @@ class SceneCanvas {
         );
     }
 
-    
+
     /////////////////////////////////////////////////////
     //                  SCENE OBJECTS                  //
     /////////////////////////////////////////////////////
@@ -632,13 +679,13 @@ class SceneCanvas {
     /**
      * Create and cache a new material object, or return the pre-cached
      * material object if there's already a match for these parameters
-     * 
+     *
      * @param r Red component of light in [0, 255]
      * @param g Green component of light in [0, 255]
      * @param b Blue component of light in [0, 255]
      * @param roughness How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness
      * @param metalness How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness
-     * @returns 
+     * @returns
      */
     addMaterial(r, g, b, roughness, metalness) {
         const prefix = getMaterialPrefix(r, g, b, roughness, metalness);
@@ -677,6 +724,59 @@ class SceneCanvas {
     }
 
     /**
+     * Create a group for hierarchical transformations
+     * @param groupId Unique identifier for the group
+     * @param gx X position of group center
+     * @param gy Y position of group center
+     * @param gz Z position of group center
+     * @param rx Rotation about x-axis, in degrees
+     * @param ry Rotation about y-axis, in degrees
+     * @param rz Rotation about z-axis, in degrees
+     */
+    addGroup(groupId, gx, gy, gz, rx, ry, rz) {
+        if (rx === undefined) {
+            rx = 0;
+        }
+        if (ry === undefined) {
+            ry = 0;
+        }
+        if (rz === undefined) {
+            rz = 0;
+        }
+        const group = new THREE.Group();
+        setObjectPosRot(group, gx, gy, gz, rx, ry, rz);
+        this.scene.add(group);
+        this.groups[groupId] = group;
+    }
+
+    /**
+     * Create a nested group (group within a group) for hierarchical transformations
+     * @param childGroupId Unique identifier for the child group
+     * @param parentGroupId Unique identifier for the parent group
+     * @param gx X position of group center (relative to parent group)
+     * @param gy Y position of group center (relative to parent group)
+     * @param gz Z position of group center (relative to parent group)
+     * @param rx Rotation about x-axis, in degrees
+     * @param ry Rotation about y-axis, in degrees
+     * @param rz Rotation about z-axis, in degrees
+     */
+    addGroupToGroup(childGroupId, parentGroupId, gx, gy, gz, rx, ry, rz) {
+        if (rx === undefined) {
+            rx = 0;
+        }
+        if (ry === undefined) {
+            ry = 0;
+        }
+        if (rz === undefined) {
+            rz = 0;
+        }
+        const group = new THREE.Group();
+        setObjectPosRot(group, gx, gy, gz, rx, ry, rz);
+        this.groups[parentGroupId].add(group);
+        this.groups[childGroupId] = group;
+    }
+
+    /**
      * Add a box to the scene
      * @param cx X center of box
      * @param cy Y center of box
@@ -692,8 +792,9 @@ class SceneCanvas {
      * @param rx Rotation about x-axis, in degrees
      * @param ry Rotation about y-axis, in degrees
      * @param rz Rotation about z-axis, in degrees
+     * @param parentGroupId Optional group ID to add this box to
      */
-    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz) {
+    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -707,7 +808,8 @@ class SceneCanvas {
         const material = this.addMaterial(r, g, b, roughness, metalness);
         const box = new THREE.Mesh(geometry, material);
         setObjectPosRot(box, cx, cy, cz, rx, ry, rz);
-        this.scene.add(box);
+        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
+        parent.add(box);
         return box;
     }
 
@@ -729,8 +831,9 @@ class SceneCanvas {
      * @param sx Scale about x-axis
      * @param sy Scale about y-axis
      * @param sz Scale about z-axis
-         */    
-    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz) {
+     * @param parentGroupId Optional group ID to add this cylinder to
+         */
+    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -754,7 +857,8 @@ class SceneCanvas {
         const cylinder = new THREE.Mesh(geometry, material);
         setObjectPosRot(cylinder, cx, cy, cz, rx, ry, rz);
         setObjectScale(cylinder, sx, sy, sz);
-        this.scene.add(cylinder);
+        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
+        parent.add(cylinder);
     }
 
     /**
@@ -775,8 +879,9 @@ class SceneCanvas {
      * @param sx Scale about x-axis
      * @param sy Scale about y-axis
      * @param sz Scale about z-axis
+     * @param parentGroupId Optional group ID to add this cone to
      */
-    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz) {
+    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -800,7 +905,8 @@ class SceneCanvas {
         const cone = new THREE.Mesh(geometry, material);
         setObjectPosRot(cone, cx, cy, cz, rx, ry, rz);
         setObjectScale(cone, sx, sy, sz);
-        this.scene.add(cone);
+        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
+        parent.add(cone);
     }
 
     /**
@@ -819,8 +925,9 @@ class SceneCanvas {
      * @param rx Rotation about x-axis, in degrees
      * @param ry Rotation about y-axis, in degrees
      * @param rz Rotation about z-axis, in degrees
+     * @param parentGroupId Optional group ID to add this ellipsoid to
      */
-    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz) {
+    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -835,7 +942,8 @@ class SceneCanvas {
         const sphere = new THREE.Mesh(geometry, material);
         setObjectPosRot(sphere, cx, cy, cz, rx, ry, rz);
         setObjectScale(sphere, radx, rady, radz);
-        this.scene.add(sphere);
+        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
+        parent.add(sphere);
         this.obj = sphere;
         return sphere;
     }
@@ -843,7 +951,7 @@ class SceneCanvas {
     /**
      * Asynchronously load the mesh geometry and the material for the mesh
      * and add them to the scene
-     * 
+     *
      * @param path File path to mesh, relative to this directory
      * @param matpath File path to material, relative to this directory
      * @param cx Offset in x
@@ -856,8 +964,9 @@ class SceneCanvas {
      * @param sy Scale along y-axis
      * @param sz Scale along z-axis
      * @param shininess A number in [0, 255] describing how shiny the mesh is
+     * @param parentGroupId Optional group ID to add this mesh to
      */
-    addTexturedMesh(path, matpath, cx, cy, cz, rx, ry, rz, sx, sy, sz, shininess) {
+    addTexturedMesh(path, matpath, cx, cy, cz, rx, ry, rz, sx, sy, sz, shininess, parentGroupId) {
         const manager = new THREE.LoadingManager();
         const that = this;
         const mtlLoader = new MTLLoader(manager);
@@ -867,10 +976,11 @@ class SceneCanvas {
             objLoader.setMaterials(mtl);
             console.log(mtl.materials.Default_OBJ);
             mtl.materials.Default_OBJ.shininess = shininess;
-            objLoader.load(path, function(obj) {       
+            objLoader.load(path, function(obj) {
                 setObjectPosRot(obj, cx, cy, cz, rx, ry, rz);
                 setObjectScale(obj, sx, sy, sz);
-                that.scene.add(obj);
+                const parent = (parentGroupId !== undefined) ? that.groups[parentGroupId] : that.scene;
+                parent.add(obj);
             },
             function(xhr){
                 console.log(path + " " + (xhr.loaded / xhr.total * 100) + "% loaded")
@@ -889,7 +999,7 @@ class SceneCanvas {
 
     /**
      * Add a mesh to the scene
-     * 
+     *
      * @param path File path to special mesh, relative to this directory
      * @param cx Offset in x
      * @param cy Offset in y
@@ -905,18 +1015,20 @@ class SceneCanvas {
      * @param b Blue component in [0, 255]
      * @param roughness How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness
      * @param metalness How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness
+     * @param parentGroupId Optional group ID to add this mesh to
      */
-    addMesh(path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b, roughness, metalness) {
+    addMesh(path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b, roughness, metalness, parentGroupId) {
         const that = this;
         const objLoader = new OBJLoader();
-        objLoader.load(path, function(obj) {       
+        objLoader.load(path, function(obj) {
             setObjectPosRot(obj, cx, cy, cz, rx, ry, rz);
             setObjectScale(obj, sx, sy, sz);
             const material = that.addMaterial(r, g, b, roughness, metalness);
             obj.traverse( function (child) {
                 child.material = material;
             });
-            that.scene.add(obj);
+            const parent = (parentGroupId !== undefined) ? that.groups[parentGroupId] : that.scene;
+            parent.add(obj);
             that.obj = obj;
         },
         function(xhr){
@@ -941,7 +1053,7 @@ class SceneCanvas {
         if (this.animating) {
             let a = this.animation;
             // Frame in this leg of the animation
-            let frame = a.frame % a.framesPerStep; 
+            let frame = a.frame % a.framesPerStep;
             // Leg of the animation
             let idx = (a.frame - frame)/a.framesPerStep;
             if (idx > a.sequence.length - 2) {
@@ -988,7 +1100,7 @@ class SceneCanvas {
             a.gif.addFrame(canvas.glcanvas, {copy:true, delay:delay});
             requestAnimationFrame(canvas.repaint.bind(canvas));
         }
-        
+
         requestAnimationFrame(this.repaint.bind(this));
     }
 }
