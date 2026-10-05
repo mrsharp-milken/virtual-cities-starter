@@ -16,7 +16,7 @@
 - [Available 3D Shapes](#available-3d-shapes)
   - [Box](#box) | [Cylinder](#cylinder) | [Cone](#cone) | [Sphere](#sphere) | [Ellipsoid](#ellipsoid)
 - [Material Properties](#material-properties)
-- [Example: Drawing a Sign](#example-drawing-a-sign)
+- [Example: Drawing a Snowman](#example-drawing-a-snowman)
 - [Your Tasks](#your-tasks)
   - [Milestone 1](#milestone-1)
     - [Task 1: Tree](#task-1-tree)
@@ -30,7 +30,7 @@
     - [Art Contest](#art-contest)
 - [Tips](#tips)
 - [Meshes (Optional/Advanced)](#meshes-optionaladvanced)
-- [Rotations (Optional/Advanced)](#rotations-optionaladvanced)
+- [Rotations](#rotations-groups)
 
 ---
 
@@ -38,7 +38,7 @@
 
 In this project, you will write Python code to generate 3D worlds. You'll create functions that draw specific city objects like trees and fire hydrants. These functions can then be called repeatedly to build complex scenes.
 
-Your Python code will generate HTML files that you can view in your browser using VS Code's Live Server extension.
+Your Python code will generate HTML files that you can view in your browser using VSCodium's Five Server extension.
 
 <details>
 <summary>Watch an optional video primer on this project (click to expand)</summary>
@@ -53,19 +53,23 @@ Your Python code will generate HTML files that you can view in your browser usin
 
 ### Downloading the Starter Code
 
-Open VS Code and your cs50-workspace. Open a new terminal, and run:
+Open VSCodium and your cs50-workspace. Open a new terminal, and run:
 
 **MacOS / Linux:**
 ```bash
-git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git temp && rm -rf temp/.git && mv temp/{*,.*} . 2>/dev/null && rmdir temp
+git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git virtual-cities && rm -rf virtual-cities/.git
 ```
 
 **Windows (PowerShell):**
 ```powershell
-git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git temp; Remove-Item -Recurse -Force temp\.git; Get-ChildItem temp -Force | Move-Item -Destination .; Remove-Item -Recurse -Force temp
+git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git virtual-cities; if ($?) { Remove-Item -Recurse -Force virtual-cities\.git }
 ```
 
+This creates a new `virtual-cities` folder inside your workspace. The last part of the command deletes the starter code's own `.git` folder so that it doesn't interfere with your workspace's existing git setup. You should now see a `virtual-cities` folder in the file explorer.
+
 ### Files You'll Have
+
+These are inside your `virtual-cities` folder:
 
 - `Scene3D.py` - The library that provides functions for drawing 3D shapes
 - `simplescene.py` - Starter code with an example scene
@@ -74,8 +78,9 @@ git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git
 
 ### Running Your Code
 
-1. Open your project folder in VS Code
-2. Run your Python file:
+1. Open your project folder in VSCodium
+2. In the terminal, move into the starter folder: `cd virtual-cities`
+3. Run your Python file:
 
    **MacOS / Linux:**
    ```bash
@@ -86,8 +91,8 @@ git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git
    ```bash
    python simplescene.py
    ```
-3. This generates an HTML file (e.g., `simplescene.html`)
-4. Right-click the HTML file in VS Code and select **"Open with Live Server"**
+4. This generates an HTML file (e.g., `simplescene.html`)
+5. Right-click the HTML file in VSCodium and select **"Open with Five Server"**
 
 <img height="330" alt="Screenshot 2025-12-15 at 1 32 19 AM" src="https://gist.github.com/user-attachments/assets/65799d86-1ca9-457f-a391-080cf26c51e6" />
 
@@ -95,9 +100,9 @@ git clone --depth 1 https://github.com/mrsharp-milken/virtual-cities-starter.git
 
 <br>
 
-5. Your 3D scene will open in your browser
+6. Your 3D scene will open in your browser
 
-> **Note:** You must use Live Server (not just double-clicking the HTML file) because the browser needs to load mesh files, which requires a web server.
+> **Note:** You must use Five Server (not just double-clicking the HTML file) because the browser needs to load mesh files, which requires a web server.
 
 You should be able to see a scene like this:
 
@@ -153,10 +158,10 @@ The `Scene3D` class provides methods for drawing various shapes. Here are the ma
 
 ```python
 # Draw a green box centered at (0, 2, -6) that is 1 x 4 x 1 (width x height x depth)
-scene.add_box(0, 2, -6, 1, 4, 1, 0, 255, 0, 1, 0)
+scene.add_box(0, 2, -6, 1, 4, 1, 0, 255, 0)
 ```
 
-Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness)`
+Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `roughness` and `metalness`, see [Material Properties](#material-properties))
 
 ![Box Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Box.png)
 
@@ -164,10 +169,10 @@ Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness
 
 ```python
 # Draw a yellow cylinder centered at (0, 1, -2) with radius 0.5 and height 2
-scene.add_cylinder(0, 1, -2, 0.5, 2, 255, 255, 0, 1, 0)
+scene.add_cylinder(0, 1, -2, 0.5, 2, 255, 255, 0)
 ```
 
-Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness)`
+Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness` and `metalness`)
 
 ![Cylinder Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cylinder.png)
 
@@ -175,10 +180,10 @@ Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b, roughness, metaln
 
 ```python
 # Draw a blue cone centered at (4, 0, 0) with radius 0.5 and height 6
-scene.add_cone(4, 0, 0, 0.5, 6, 0, 0, 255, 1, 0)
+scene.add_cone(4, 0, 0, 0.5, 6, 0, 0, 255)
 ```
 
-Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b, roughness, metalness)`
+Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness` and `metalness`)
 
 ![Cone Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cone.png)
 
@@ -186,10 +191,10 @@ Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b, roughness, metalness)
 
 ```python
 # Draw a cyan sphere with radius 1 centered at (-4, 4, 0)
-scene.add_sphere(-4, 4, 0, 1, 0, 255, 255, 1, 0)
+scene.add_sphere(-4, 4, 0, 1, 0, 255, 255)
 ```
 
-Parameters: `add_sphere(cx, cy, cz, radius, r, g, b, roughness, metalness)`
+Parameters: `add_sphere(cx, cy, cz, radius, r, g, b)` (plus optional `roughness` and `metalness`)
 
 ![Sphere Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Sphere.png)
 
@@ -199,10 +204,10 @@ An ellipsoid is a stretched sphere with different radii along each axis.
 
 ```python
 # Draw a red ellipsoid with radii 1/2/1 centered at (0, 5, -10)
-scene.add_ellipsoid(0, 5, -10, 1, 2, 1, 255, 0, 0, 1, 0)
+scene.add_ellipsoid(0, 5, -10, 1, 2, 1, 255, 0, 0)
 ```
 
-Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness)`
+Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optional `roughness` and `metalness`)
 
 ![Ellipsoid Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Ellipsoid.png)
 
@@ -210,61 +215,58 @@ Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, met
 
 ## Material Properties
 
-The last two parameters for shapes control their appearance:
+Shapes have two optional parameters that control their appearance. If you leave them out, you get a matte, non-metallic surface (`roughness=1`, `metalness=0`).
 
-- **roughness** (0.0 - 1.0): How rough the surface is. 0.0 = smooth/shiny mirror, 1.0 = fully diffuse/matte
-- **metalness** (0.0 - 1.0): How metallic the surface looks. 0.0 = wood/stone, 1.0 = metal
+- **roughness** (0.0 - 1.0): How rough the surface is. 0.0 = smooth/shiny mirror, 1.0 = fully diffuse/matte (default 1.0)
+- **metalness** (0.0 - 1.0): How metallic the surface looks. 0.0 = wood/stone, 1.0 = metal (default 0.0)
+
+To set one, name it when you call the function:
+
+```python
+# A shiny, metallic gray sphere
+scene.add_sphere(0, 1, -5, 1, 127, 127, 127, roughness=0.1, metalness=1)
+```
 
 ---
 
-## Example: Drawing a Sign
+## Example: Drawing a Snowman
 
-Here's an example function that draws a street sign using a cylinder for the pole and a box for the sign:
+Here's an example function from `simplescene.py` that draws a snowman using two white spheres and a black box for a hat:
 
 ```python
-def draw_sign(scene, cx, cz, is_east_west, r, g, b):
-    """
-    Draw a simple sign that consists of a 2 meter tall cylinder for the
-    pole and a 0.5x0.5x0.02 meter box for the sign itself
-
-    Args:
-        scene: The scene to which to add the sign
-        cx: Center of the sign in x
-        cz: Center of the sign in z
-        is_east_west: If True, the sign is oriented from east to west.
-                      Otherwise, the sign is oriented from north to south
-        r: Red component of the sign
-        g: Green component of the sign
-        b: Blue component of the sign
-    """
-    # Draw the main pole
-    scene.add_cylinder(cx, 1, cz, 0.05, 2, 127, 127, 127, 1, 0)
-    if is_east_west:
-        # Draw a 0.5 x 0.5 box in the X/Y plane, with a thin dimension in Z
-        scene.add_box(cx, 2, cz, 0.5, 0.5, 0.1, r, g, b, 1, 0)
-    else:
-        # Draw a 0.5 x 0.5 box in the Y/Z plane, with a thin dimension in X
-        scene.add_box(cx, 2, cz, 0.1, 0.5, 0.5, r, g, b, 1, 0)
+def simple_snowman(scene, cx, cz):
+    # Big white bottom ball (radius 1, so its center is 1 above the ground)
+    scene.add_sphere(cx, 1, cz, 1, 255, 255, 255)
+    # Smaller white ball on top (radius 0.7), resting on the bottom ball
+    scene.add_sphere(cx, 2.5, cz, 0.7, 255, 255, 255)
+    # Black box for a hat, sitting on top of the head
+    scene.add_box(cx, 3.4, cz, 0.7, 0.4, 0.7, 0, 0, 0)
 ```
 
-Notice how the function takes `cx` and `cz` parameters to position the sign anywhere in the scene. This lets you call the function multiple times to place signs in different locations:
+### Anatomy of a function
+
+- **`def simple_snowman(...)`** defines a new function. Everything indented below it is the function's body.
+- **`scene`** is the 3D world you are drawing into. Every shape is added with `scene.add_...`, so a function can only draw if you hand it the scene. That's why `scene` is always the **first parameter**, and why you pass `scene` along whenever you call one of your functions.
+- **`cx` and `cz`** are the position parameters. Inside the function, every shape uses `cx` and `cz` for its x and z coordinates, so the whole snowman moves when you change them. The y values are fixed because the snowman always stands on the ground.
+
+Because the position is a parameter, you can call the function as many times as you like to put snowmen in different places:
 
 ```python
-# Draw a red sign oriented east-west
-draw_sign(scene, -2, -5, True, 255, 0, 0)
+simple_snowman(scene, -4, -8)
+simple_snowman(scene, 0, -12)
+simple_snowman(scene, 5, -6)
+```
 
-# Draw a green sign oriented north-south
-draw_sign(scene, 0, -10, False, 0, 255, 0)
+Here's one more example, which loads meshes instead of building shapes:
 
+```python
 # Draw a shiny, stone-like, yellow Homer Simpson and a smokestack
-scene.add_mesh("meshes/homer.obj", 1, 1.4, -7, 0, 0, 0, 1, 1, 1, 255, 255, 0, 1, 1)
+scene.add_mesh("meshes/homer.obj", 1, 1.4, -7, 0, 0, 0, 1, 1, 1, 255, 255, 0, roughness=1, metalness=1)
 scene.add_textured_mesh("meshes/smokestack/medres.obj", "meshes/smokestack/medres.mtl",
                       0, 18, -20, 0, 180, 0, 10, 10, 10, 0)
 ```
 
 _For kicks, I also threw in Homer Simpson and the painted smokestack!_
-
-![Signs Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Signs.png)
 
 ---
 
@@ -280,7 +282,7 @@ Complete the following two tasks to build basic city objects.
 
 #### Task 1: Tree
 
-Create a function `draw_tree(scene, cx, cz, height)` that draws a simple "lollipop" tree:
+In `simplescene.py`, finish the function `draw_tree(scene, cx, cz, height)`. It's already started for you, so complete the two TODOs: fill in the function body, and call `draw_tree` in `main()`. It should draw a simple "lollipop" tree:
 
 - A **brown trunk** (RGB: 102, 51, 0) made from a cylinder
 - A **green ellipsoid** (RGB: 0, 255, 0) for the leaves on top
@@ -325,23 +327,23 @@ Below is an example stoplight with a fire hydrant next to it for scale:
 
 #### Task 4: Sedan
 
-Create a function `draw_sedan(scene, cx, cz, is_east_west, r, g, b)` that draws a boxy car:
+Create a function `draw_sedan(scene, cx, cz, r, g, b, ry=0)` that draws a boxy car:
 
 - **Bottom box** (car body): 4.5 meters long, 1.7 meters wide, 0.7 meters tall, in the specified color
 - **Top box** (cabin): 3.5 meters long, 1.4 meters wide, 0.8 meters tall, slightly offset on top of the body
-- **Four wheels**: Grey cylinders (RGB: 127, 127, 127) with radius 0.5 and appropriate height
-  - For an east/west car, rotate the wheels 90 degrees around the x-axis
-  - For a north/south car, rotate the wheels 90 degrees around both the x-axis and y-axis
+- **Four wheels**: Grey cylinders (RGB: 127, 127, 127) with radius 0.5 and appropriate height. A cylinder stands upright by default, so rotate each wheel 90 degrees around the x-axis to put it on its side.
 
-The `is_east_west` parameter determines the car's orientation:
-- `True`: Car faces east/west direction
-- `False`: Car faces north/south direction
+The `ry` parameter is the car's rotation around the y-axis (the vertical axis), in degrees. It is optional and defaults to 0:
+- `ry=0`: The car faces east/west
+- `ry=90`: The car faces north/south
+
+> **Do it in two steps:** First get the car working with no rotation, drawn facing east/west. Once it looks right, add the `ry` rotation so the car can face other directions. Use groups to do this: see [Rotations](#rotations-groups) at the bottom, but rotate only around `ry`. A car doesn't tilt, so you don't need `rx` or `rz` for the whole car.
 
 Below is an example of a red east/west car and a yellow north/south car, with a fire hydrant and stop light for scale:
 
 ![Sedan Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Sedan.png)
 
-> **Note:** To rotate shapes, use the rotated versions of the shape methods. For example, `add_cylinder` has a rotated version that takes additional rotation parameters (rx, ry, rz) for rotation in degrees around each axis.
+> **Note:** To rotate shapes, use the rotated versions of the shape methods. For example, `add_cylinder` takes optional rotation parameters (rx, ry, rz) for rotation in degrees around each axis.
 
 #### Task 5: City Block
 
@@ -351,7 +353,6 @@ Create a function `draw_city_block(scene, cx, cz)` that creates a city block by 
 - At least **two trees** of different heights (using `draw_tree`)
 - At least **one fire hydrant** (using `draw_fire_hydrant`)
 - At least **one stop light** (using `draw_stop_light`)
-- At least **one sign** (using `draw_sign` from the example)
 - At least **one building** (which can simply be a large box)
 
 Here's an example city block:
@@ -407,7 +408,7 @@ Your scene will be evaluated on **Technical Implementation** and **Visual Creati
 - Clear hierarchy of functions: "primitive" functions (basic objects) are called by "composite" functions (complex objects/structures)
 - Multiple functions use complex parameters (rotation, scaling, etc.)
 - Demonstrates novel parameter usage (e.g., number of branches on a tree, number of windows in a building, detail level)
-- Demonstrates sophisticated use of previously covered concepts (loops, conditionals, randomization, mathematical calculations)
+- Demonstrates sophisticated use of previously covered concepts (loops, randomization, mathematical calculations)
 
 #### Visual Creativity & Expressiveness
 
@@ -439,7 +440,7 @@ The result looks like this:
 ## Tips
 
 1. **Start simple**: Get one shape working before adding more
-2. **Use the viewer**: Keep your browser open with Live Server - it will auto-refresh when you regenerate the HTML
+2. **Use the viewer**: Keep your browser open with Five Server - it will auto-refresh when you regenerate the HTML
 3. **Position objects above ground**: The ground is at y=0, so objects should have positive y values
 4. **Think about centers**: Shape positions are their centers, so a cylinder with height 2 centered at y=1 will sit on the ground (y=0)
 5. **Experiment**: Try different sizes and positions to get shapes looking right
@@ -452,14 +453,14 @@ For more complex objects, you can load pre-made 3D meshes from the `meshes/` fol
 
 ```python
 # Add a mesh with position, rotation, scale, and color
-scene.add_mesh("meshes/homer.obj", 1, 1.4, -7, 0, 0, 0, 1, 1, 1, 255, 255, 0, 1, 1)
+scene.add_mesh("meshes/homer.obj", 1, 1.4, -7, 0, 0, 0, 1, 1, 1, 255, 255, 0, roughness=1, metalness=1)
 ```
 
-Parameters: `add_mesh(path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b, roughness, metalness)`
+Parameters: `add_mesh(path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b)` (plus optional `roughness` and `metalness`)
 
 Check the `meshes/` folder for available models including animals, people, and objects.
 
-## Rotations (Optional/Advanced)
+## Rotations (Groups)
 
 Create a rotation group using `add_group(x, y, z, rx, ry, rz)`. All objects added to the group rotate together.
 
@@ -472,8 +473,8 @@ def draw_tree(scene, cx, cz, height, rx=0, rz=0):
     
     # Add objects to the group (they rotate together)
     # x, y, z coords are relative to the group's center position
-    group.add_cylinder(0, height/2, 0, 0.3, height, 102, 51, 0, 1, 0)
-    group.add_ellipsoid(0, height, 0, 1, 1, 1, 0, 255, 0, 1, 0)
+    group.add_cylinder(0, height/2, 0, 0.3, height, 102, 51, 0)
+    group.add_ellipsoid(0, height, 0, 1, 1, 1, 0, 255, 0)
 ```
 
 ### Sample Calls

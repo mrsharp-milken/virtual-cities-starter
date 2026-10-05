@@ -69,7 +69,7 @@ class Group:
         self._group_id = group_id
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness, metalness, rx=0, ry=0, rz=0):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0):
         """
         Add a box to the group
 
@@ -84,9 +84,9 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -94,7 +94,7 @@ class Group:
         self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
         """
         Add a cylinder to the group
 
@@ -108,9 +108,9 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -121,7 +121,7 @@ class Group:
         self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
         """
         Add a cone to the group
 
@@ -135,9 +135,9 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -148,7 +148,7 @@ class Group:
         self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness, metalness, rx=0, ry=0, rz=0):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0):
         """
         Add an ellipsoid to the group
 
@@ -163,16 +163,16 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
         """
         self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness, metalness):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0):
         """
         Add a sphere to the group
 
@@ -185,15 +185,15 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
         """
         # Call add_ellipsoid directly with group_id
         self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id});\n"
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
-                 roughness, metalness):
+                 roughness=1, metalness=0):
         """
         Add a mesh to the group
 
@@ -212,9 +212,9 @@ class Group:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
         """
         self._scene._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness},{self._group_id});\n'
 
@@ -266,7 +266,7 @@ class Scene3D:
         self._next_group_id = 0
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness, metalness, rx=0, ry=0, rz=0):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0):
         """
         Add a box to the scene
 
@@ -281,9 +281,9 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -291,7 +291,7 @@ class Scene3D:
         self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
         """
         Add a cylinder to the scene
 
@@ -305,9 +305,9 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -318,7 +318,7 @@ class Scene3D:
         self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness, metalness, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
         """
         Add a cone to the scene
 
@@ -332,9 +332,9 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
@@ -342,10 +342,10 @@ class Scene3D:
             sy: Scale about y-axis (default 1)
             sz: Scale about z-axis (default 1)
         """
-        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz});"
+        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness, metalness, rx=0, ry=0, rz=0):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0):
         """
         Add an ellipsoid to the scene
 
@@ -360,16 +360,16 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
         """
         self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness, metalness):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0):
         """
         Add a sphere to the scene
 
@@ -382,14 +382,14 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
         """
         self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness)
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
-                 roughness, metalness):
+                 roughness=1, metalness=0):
         """
         Add a mesh to the scene
 
@@ -408,9 +408,9 @@ class Scene3D:
             g: Green component in [0, 255]
             b: Blue component in [0, 255]
             roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse.
+                       reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0.
+                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
         """
         self._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness});\n'
 
