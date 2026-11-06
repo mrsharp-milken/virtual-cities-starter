@@ -69,7 +69,7 @@ class Group:
         self._group_id = group_id
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness=1, metalness=0, rx=0, ry=0, rz=0):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
         """
         Add a box to the group
 
@@ -90,11 +90,13 @@ class Group:
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
+        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
         """
         Add a cylinder to the group
 
@@ -117,11 +119,13 @@ class Group:
             sx: Scale about x-axis (default 1)
             sy: Scale about y-axis (default 1)
             sz: Scale about z-axis (default 1)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
+        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
         """
         Add a cone to the group
 
@@ -144,11 +148,13 @@ class Group:
             sx: Scale about x-axis (default 1)
             sy: Scale about y-axis (default 1)
             sz: Scale about z-axis (default 1)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id});\n"
+        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness=1, metalness=0, rx=0, ry=0, rz=0):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
         """
         Add an ellipsoid to the group
 
@@ -169,10 +175,12 @@ class Group:
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id});\n"
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1):
         """
         Add a sphere to the group
 
@@ -188,9 +196,11 @@ class Group:
                        reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
                        such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
         # Call add_ellipsoid directly with group_id
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id});\n"
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id},{opacity});\n"
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
                  roughness=1, metalness=0):
@@ -266,7 +276,7 @@ class Scene3D:
         self._next_group_id = 0
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness=1, metalness=0, rx=0, ry=0, rz=0):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
         """
         Add a box to the scene
 
@@ -287,11 +297,13 @@ class Scene3D:
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz});\n"
+        self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
         """
         Add a cylinder to the scene
 
@@ -314,11 +326,13 @@ class Scene3D:
             sx: Scale about x-axis (default 1)
             sy: Scale about y-axis (default 1)
             sz: Scale about z-axis (default 1)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz});\n"
+        self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
         """
         Add a cone to the scene
 
@@ -341,11 +355,13 @@ class Scene3D:
             sx: Scale about x-axis (default 1)
             sy: Scale about y-axis (default 1)
             sz: Scale about z-axis (default 1)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz});\n"
+        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness=1, metalness=0, rx=0, ry=0, rz=0):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
         """
         Add an ellipsoid to the scene
 
@@ -366,10 +382,12 @@ class Scene3D:
             rx: Rotation about x-axis, in degrees (default 0)
             ry: Rotation about y-axis, in degrees (default 0)
             rz: Rotation about z-axis, in degrees (default 0)
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz});\n"
+        self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1):
         """
         Add a sphere to the scene
 
@@ -385,8 +403,10 @@ class Scene3D:
                        reflection, 1.0 means fully diffuse (default 1.0).
             metalness: How much the material is like a metal. Non-metallic materials
                        such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
+            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
+                     solid (default 1.0). Transparent shapes are visible from both sides.
         """
-        self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness)
+        self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness, opacity=opacity)
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
                  roughness=1, metalness=0):

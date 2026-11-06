@@ -1,6 +1,6 @@
 # Getting Started: Build Your Virtual City (Python)
 
-![walkthroughtown (1)](https://gist.github.com/user-attachments/assets/11ea0994-ee9d-4796-9a5f-14416ce81d61)
+![walkthroughtown](https://gist.github.com/user-attachments/assets/11ea0994-ee9d-4796-9a5f-14416ce81d61)
 
 
 ## Table of Contents
@@ -161,7 +161,7 @@ The `Scene3D` class provides methods for drawing various shapes. Here are the ma
 scene.add_box(0, 2, -6, 1, 4, 1, 0, 255, 0)
 ```
 
-Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `roughness` and `metalness`, see [Material Properties](#material-properties))
+Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`, see [Material Properties](#material-properties))
 
 ![Box Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Box.png)
 
@@ -172,7 +172,7 @@ Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `rou
 scene.add_cylinder(0, 1, -2, 0.5, 2, 255, 255, 0)
 ```
 
-Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness` and `metalness`)
+Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
 
 ![Cylinder Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cylinder.png)
 
@@ -183,7 +183,7 @@ Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `
 scene.add_cone(4, 0, 0, 0.5, 6, 0, 0, 255)
 ```
 
-Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness` and `metalness`)
+Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
 
 ![Cone Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cone.png)
 
@@ -194,7 +194,7 @@ Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roug
 scene.add_sphere(-4, 4, 0, 1, 0, 255, 255)
 ```
 
-Parameters: `add_sphere(cx, cy, cz, radius, r, g, b)` (plus optional `roughness` and `metalness`)
+Parameters: `add_sphere(cx, cy, cz, radius, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
 
 ![Sphere Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Sphere.png)
 
@@ -207,7 +207,7 @@ An ellipsoid is a stretched sphere with different radii along each axis.
 scene.add_ellipsoid(0, 5, -10, 1, 2, 1, 255, 0, 0)
 ```
 
-Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optional `roughness` and `metalness`)
+Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
 
 ![Ellipsoid Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Ellipsoid.png)
 
@@ -215,16 +215,20 @@ Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optiona
 
 ## Material Properties
 
-Shapes have two optional parameters that control their appearance. If you leave them out, you get a matte, non-metallic surface (`roughness=1`, `metalness=0`).
+Shapes have three optional parameters that control their appearance. If you leave them out, you get a matte, non-metallic, solid surface (`roughness=1`, `metalness=0`, `opacity=1`).
 
 - **roughness** (0.0 - 1.0): How rough the surface is. 0.0 = smooth/shiny mirror, 1.0 = fully diffuse/matte (default 1.0)
 - **metalness** (0.0 - 1.0): How metallic the surface looks. 0.0 = wood/stone, 1.0 = metal (default 0.0)
+- **opacity** (0.0 - 1.0): How see-through the shape is. 0.0 = invisible, 1.0 = fully solid (default 1.0). Shapes with opacity below 1 can be seen through, and you can see their inside faces. Works on boxes, cylinders, cones, spheres, and ellipsoids (not meshes).
 
 To set one, name it when you call the function:
 
 ```python
 # A shiny, metallic gray sphere
 scene.add_sphere(0, 1, -5, 1, 127, 127, 127, roughness=0.1, metalness=1)
+
+# A half-transparent blue box
+scene.add_box(0, 1, -5, 2, 2, 2, 0, 100, 255, opacity=0.5)
 ```
 
 ---

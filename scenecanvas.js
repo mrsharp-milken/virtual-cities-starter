@@ -1,8 +1,8 @@
 const RADIAL_SEGMENTS = 32; // For spheres, cylinders, and cones
 const BEACON_SIZE = 0.1; // For point lights
 
-function getMaterialPrefix(r, g, b, roughness, metalness) {
-    return r + "_" + g + "_" + b + "_" + roughness + "_" + metalness;
+function getMaterialPrefix(r, g, b, roughness, metalness, opacity) {
+    return r + "_" + g + "_" + b + "_" + roughness + "_" + metalness + "_" + opacity;
 }
 
 /**
@@ -685,15 +685,24 @@ class SceneCanvas {
      * @param b Blue component of light in [0, 255]
      * @param roughness How rough the material appears. 0.0 means a smooth mirror reflection, 1.0 means fully diffuse. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.roughness
      * @param metalness How much the material is like a metal. Non-metallic materials such as wood or stone use 0.0, metallic use 1.0, with nothing (usually) in between. https://threejs.org/docs/#api/en/materials/MeshStandardMaterial.metalness
+     * @param opacity How opaque the material is, from 0.0 (invisible) to 1.0 (solid, default). Anything below 1 is drawn transparent and double-sided
      * @returns
      */
-    addMaterial(r, g, b, roughness, metalness) {
-        const prefix = getMaterialPrefix(r, g, b, roughness, metalness);
+    addMaterial(r, g, b, roughness, metalness, opacity) {
+        if (opacity === undefined) {
+            opacity = 1;
+        }
+        const prefix = getMaterialPrefix(r, g, b, roughness, metalness, opacity);
         if (!(prefix in this.materials)) {
             let params = {};
             params.color = new THREE.Color("rgb("+r+","+g+","+b+")");
             params.roughness = roughness;
             params.metalness = metalness;
+            if (opacity < 1) {
+                params.transparent = true;
+                params.opacity = opacity;
+                params.side = THREE.DoubleSide;
+            }
             this.materials[prefix] = new THREE.MeshStandardMaterial(params);
         }
         return this.materials[prefix];
@@ -794,7 +803,7 @@ class SceneCanvas {
      * @param rz Rotation about z-axis, in degrees
      * @param parentGroupId Optional group ID to add this box to
      */
-    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId) {
+    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -805,7 +814,7 @@ class SceneCanvas {
             rz = 0;
         }
         const geometry = new THREE.BoxGeometry(xlen, ylen, zlen);
-        const material = this.addMaterial(r, g, b, roughness, metalness);
+        const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const box = new THREE.Mesh(geometry, material);
         setObjectPosRot(box, cx, cy, cz, rx, ry, rz);
         const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
@@ -833,7 +842,7 @@ class SceneCanvas {
      * @param sz Scale about z-axis
      * @param parentGroupId Optional group ID to add this cylinder to
          */
-    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId) {
+    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -853,7 +862,7 @@ class SceneCanvas {
             sz = 1;
         }
         const geometry = new THREE.CylinderGeometry(radius, radius, height, RADIAL_SEGMENTS);
-        const material = this.addMaterial(r, g, b, roughness, metalness);
+        const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const cylinder = new THREE.Mesh(geometry, material);
         setObjectPosRot(cylinder, cx, cy, cz, rx, ry, rz);
         setObjectScale(cylinder, sx, sy, sz);
@@ -881,7 +890,7 @@ class SceneCanvas {
      * @param sz Scale about z-axis
      * @param parentGroupId Optional group ID to add this cone to
      */
-    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId) {
+    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -901,7 +910,7 @@ class SceneCanvas {
             sz = 1;
         }
         const geometry = new THREE.ConeGeometry(radius, height, RADIAL_SEGMENTS);
-        const material = this.addMaterial(r, g, b, roughness, metalness);
+        const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const cone = new THREE.Mesh(geometry, material);
         setObjectPosRot(cone, cx, cy, cz, rx, ry, rz);
         setObjectScale(cone, sx, sy, sz);
@@ -927,7 +936,7 @@ class SceneCanvas {
      * @param rz Rotation about z-axis, in degrees
      * @param parentGroupId Optional group ID to add this ellipsoid to
      */
-    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId) {
+    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity) {
         if (rx === undefined) {
             rx = 0;
         }
@@ -938,7 +947,7 @@ class SceneCanvas {
             rz = 0;
         }
         const geometry = new THREE.SphereGeometry(1, RADIAL_SEGMENTS, RADIAL_SEGMENTS);
-        const material = this.addMaterial(r, g, b, roughness, metalness);
+        const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const sphere = new THREE.Mesh(geometry, material);
         setObjectPosRot(sphere, cx, cy, cz, rx, ry, rz);
         setObjectScale(sphere, radx, rady, radz);
