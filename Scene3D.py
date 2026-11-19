@@ -105,20 +105,27 @@ class Group:
     """
     A group for hierarchical transformations. Shapes added to a group
     will rotate together around the group's center.
+    The shape methods here are also available directly on Scene3D, which is
+    just the top-level group.
     """
     def __init__(self, scene, group_id):
         self._scene = scene
         self._group_id = group_id
 
+    @property
+    def _group_arg(self):
+        """This group's ID as a JavaScript argument ("undefined" for the scene itself)"""
+        return "undefined" if self._group_id is None else str(self._group_id)
+
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
                 roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None, closed=False):
         """
-        Add a box to the group
+        Add a box
 
         Args:
-            cx: X center of box (relative to group center)
-            cy: Y center of box (relative to group center)
-            cz: Z center of box (relative to group center)
+            cx: X center of box (relative to the group's center, if added to a group)
+            cy: Y center of box (relative to the group's center, if added to a group)
+            cz: Z center of box (relative to the group's center, if added to a group)
             xlen: Length of box along x-axis
             ylen: Length of box along y-axis
             zlen: Length of box along z-axis
@@ -141,17 +148,17 @@ class Group:
         """
         _check_shape(r, g, b, roughness, metalness, opacity, xlen=xlen, ylen=ylen, zlen=zlen)
         _hollow = _hollow_args("box", wall, closed, min(xlen, ylen, zlen)/2 if closed else min(xlen, zlen)/2)
-        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity},{_hollow});\n"
+        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_arg},{opacity},{_hollow});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
                      roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None, closed=False):
         """
-        Add a cylinder to the group
+        Add a cylinder
 
         Args:
-            cx: X center of cylinder (relative to group center)
-            cy: Y center of cylinder (relative to group center)
-            cz: Z center of cylinder (relative to group center)
+            cx: X center of cylinder (relative to the group's center, if added to a group)
+            cy: Y center of cylinder (relative to the group's center, if added to a group)
+            cz: Z center of cylinder (relative to the group's center, if added to a group)
             radius: Radius of the cylinder
             height: Height of the cylinder
             r: Red component in [0, 255]
@@ -175,17 +182,17 @@ class Group:
         """
         _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
         _hollow = _hollow_args("cylinder", wall, closed, min(radius, height/2) if closed else radius)
-        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity},{_hollow});\n"
+        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_arg},{opacity},{_hollow});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
                  roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None):
         """
-        Add a cone to the group
+        Add a cone
 
         Args:
-            cx: X center of cone (relative to group center)
-            cy: Y center of cone (relative to group center)
-            cz: Z center of cone (relative to group center)
+            cx: X center of cone (relative to the group's center, if added to a group)
+            cy: Y center of cone (relative to the group's center, if added to a group)
+            cz: Z center of cone (relative to the group's center, if added to a group)
             radius: Radius of the cone
             height: Height of the cone
             r: Red component in [0, 255]
@@ -207,17 +214,17 @@ class Group:
         """
         _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
         _hollow = _hollow_args("cone", wall, False, radius*height/(radius**2+height**2)**0.5)
-        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity},{_hollow});\n"
+        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_arg},{opacity},{_hollow});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
                       roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None):
         """
-        Add an ellipsoid to the group
+        Add an ellipsoid
 
         Args:
-            cx: X center of ellipsoid (relative to group center)
-            cy: Y center of ellipsoid (relative to group center)
-            cz: Z center of ellipsoid (relative to group center)
+            cx: X center of ellipsoid (relative to the group's center, if added to a group)
+            cy: Y center of ellipsoid (relative to the group's center, if added to a group)
+            cz: Z center of ellipsoid (relative to the group's center, if added to a group)
             radx: Semi-axis x radius
             rady: Semi-axis y radius
             radz: Semi-axis z radius
@@ -238,16 +245,16 @@ class Group:
         """
         _check_shape(r, g, b, roughness, metalness, opacity, radx=radx, rady=rady, radz=radz)
         _hollow = _hollow_args("ellipsoid", wall, False, min(radx, rady, radz))
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity},{_hollow});\n"
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_arg},{opacity},{_hollow});\n"
 
     def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1, wall=None):
         """
-        Add a sphere to the group
+        Add a sphere
 
         Args:
-            cx: X center of the sphere (relative to group center)
-            cy: Y center of the sphere (relative to group center)
-            cz: Z center of the sphere (relative to group center)
+            cx: X center of the sphere (relative to the group's center, if added to a group)
+            cy: Y center of the sphere (relative to the group's center, if added to a group)
+            cz: Z center of the sphere (relative to the group's center, if added to a group)
             radius: Radius of the sphere
             r: Red component in [0, 255]
             g: Green component in [0, 255]
@@ -264,18 +271,18 @@ class Group:
         _check_shape(r, g, b, roughness, metalness, opacity, radius=radius)
         _hollow = _hollow_args("sphere", wall, False, radius)
         # Call add_ellipsoid directly with group_id
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id},{opacity},{_hollow});\n"
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_arg},{opacity},{_hollow});\n"
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
                  roughness=1, metalness=0):
         """
-        Add a mesh to the group
+        Add a mesh
 
         Args:
             path: File path to special mesh, relative to this directory
-            cx: Offset in x (relative to group center)
-            cy: Offset in y (relative to group center)
-            cz: Offset in z (relative to group center)
+            cx: Offset in x (relative to the group's center, if added to a group)
+            cy: Offset in y (relative to the group's center, if added to a group)
+            cz: Offset in z (relative to the group's center, if added to a group)
             rx: Rotation around x-axis
             ry: Rotation around y-axis
             rz: Rotation around z-axis
@@ -290,19 +297,19 @@ class Group:
             metalness: How much the material is like a metal. Non-metallic materials
                        such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
         """
-        self._scene._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness},{self._group_id});\n'
+        self._scene._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness},{self._group_arg});\n'
 
     def add_textured_mesh(self, path, matpath, cx, cy, cz, rx, ry, rz,
                           sx, sy, sz, shininess):
         """
-        Add a textured mesh to the group
+        Add a textured mesh
 
         Args:
             path: File path to mesh, relative to this directory
             matpath: File path to material, relative to this directory
-            cx: Offset in x (relative to group center)
-            cy: Offset in y (relative to group center)
-            cz: Offset in z (relative to group center)
+            cx: Offset in x (relative to the group's center, if added to a group)
+            cy: Offset in y (relative to the group's center, if added to a group)
+            cz: Offset in z (relative to the group's center, if added to a group)
             rx: Rotation around x-axis
             ry: Rotation around y-axis
             rz: Rotation around z-axis
@@ -311,7 +318,7 @@ class Group:
             sz: Scale along z-axis
             shininess: A number in [0, 255] describing how shiny the mesh is
         """
-        self._scene._scene_code += f'canvas.addTexturedMesh("{path}","{matpath}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{shininess},{self._group_id});\n'
+        self._scene._scene_code += f'canvas.addTexturedMesh("{path}","{matpath}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{shininess},{self._group_arg});\n'
 
     def add_group(self, cx, cy, cz, rx=0, ry=0, rz=0):
         """
@@ -330,215 +337,20 @@ class Group:
         """
         child_group_id = self._scene._next_group_id
         self._scene._next_group_id += 1
-        self._scene._scene_code += f"canvas.addGroupToGroup({child_group_id},{self._group_id},{cx},{cy},{cz},{rx},{ry},{rz});\n"
+        self._scene._scene_code += f"canvas.addGroupToGroup({child_group_id},{self._group_arg},{cx},{cy},{cz},{rx},{ry},{rz});\n"
         return Group(self._scene, child_group_id)
 
 
-class Scene3D:
+
+class Scene3D(Group):
+    """
+    A scene: the top-level group, plus cameras and lights. Shapes (add_box,
+    add_sphere, ...) are inherited from Group.
+    """
     def __init__(self):
+        super().__init__(self, None)
         self._scene_code = "let canvas = new SceneCanvas();\n"
         self._next_group_id = 0
-
-    def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None, closed=False):
-        """
-        Add a box to the scene
-
-        Args:
-            cx: X center of box
-            cy: Y center of box
-            cz: Z center of box
-            xlen: Length of box along x-axis
-            ylen: Length of box along y-axis
-            zlen: Length of box along z-axis
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-            rx: Rotation about x-axis, in degrees (default 0)
-            ry: Rotation about y-axis, in degrees (default 0)
-            rz: Rotation about z-axis, in degrees (default 0)
-            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
-                     solid (default 1.0). Transparent shapes are visible from both sides.
-            wall: Wall thickness. Leave out for a solid shape. With wall, the box becomes a square tube open
-                  at the top and bottom (along the y-axis); rotate it to point elsewhere.
-            closed: With wall, keep every face so the inside is a sealed hollow
-                    (default False, which leaves the ends open)
-        """
-        _check_shape(r, g, b, roughness, metalness, opacity, xlen=xlen, ylen=ylen, zlen=zlen)
-        _hollow = _hollow_args("box", wall, closed, min(xlen, ylen, zlen)/2 if closed else min(xlen, zlen)/2)
-        self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity},{_hollow});\n"
-
-    def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None, closed=False):
-        """
-        Add a cylinder to the scene
-
-        Args:
-            cx: X center of cylinder
-            cy: Y center of cylinder
-            cz: Z center of cylinder
-            radius: Radius of the cylinder
-            height: Height of the cylinder
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-            rx: Rotation about x-axis, in degrees (default 0)
-            ry: Rotation about y-axis, in degrees (default 0)
-            rz: Rotation about z-axis, in degrees (default 0)
-            sx: Scale about x-axis (default 1)
-            sy: Scale about y-axis (default 1)
-            sz: Scale about z-axis (default 1)
-            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
-                     solid (default 1.0). Transparent shapes are visible from both sides.
-            wall: Wall thickness. Leave out for a solid shape. With wall, the cylinder becomes a pipe open at both ends.
-            closed: With wall, keep every face so the inside is a sealed hollow
-                    (default False, which leaves the ends open)
-        """
-        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
-        _hollow = _hollow_args("cylinder", wall, closed, min(radius, height/2) if closed else radius)
-        self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity},{_hollow});\n"
-
-    def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None):
-        """
-        Add a cone to the scene
-
-        Args:
-            cx: X center of cone
-            cy: Y center of cone
-            cz: Z center of cone
-            radius: Radius of the cone
-            height: Height of the cone
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-            rx: Rotation about x-axis, in degrees (default 0)
-            ry: Rotation about y-axis, in degrees (default 0)
-            rz: Rotation about z-axis, in degrees (default 0)
-            sx: Scale about x-axis (default 1)
-            sy: Scale about y-axis (default 1)
-            sz: Scale about z-axis (default 1)
-            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
-                     solid (default 1.0). Transparent shapes are visible from both sides.
-            wall: Wall thickness. Leave out for a solid shape. With wall, the cone becomes hollow and open at the base.
-        """
-        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
-        _hollow = _hollow_args("cone", wall, False, radius*height/(radius**2+height**2)**0.5)
-        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity},{_hollow});\n"
-
-    def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None):
-        """
-        Add an ellipsoid to the scene
-
-        Args:
-            cx: X center of ellipsoid
-            cy: Y center of ellipsoid
-            cz: Z center of ellipsoid
-            radx: Semi-axis x radius
-            rady: Semi-axis y radius
-            radz: Semi-axis z radius
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-            rx: Rotation about x-axis, in degrees (default 0)
-            ry: Rotation about y-axis, in degrees (default 0)
-            rz: Rotation about z-axis, in degrees (default 0)
-            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
-                     solid (default 1.0). Transparent shapes are visible from both sides.
-            wall: Wall thickness. Leave out for a solid shape. With wall, the ellipsoid becomes a sealed hollow shell
-                  (visible inside only with opacity or from a camera inside).
-        """
-        _check_shape(r, g, b, roughness, metalness, opacity, radx=radx, rady=rady, radz=radz)
-        _hollow = _hollow_args("ellipsoid", wall, False, min(radx, rady, radz))
-        self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity},{_hollow});\n"
-
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1, wall=None):
-        """
-        Add a sphere to the scene
-
-        Args:
-            cx: X center of the sphere
-            cy: Y center of the sphere
-            cz: Z center of the sphere
-            radius: Radius of the sphere
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-            opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
-                     solid (default 1.0). Transparent shapes are visible from both sides.
-            wall: Wall thickness. Leave out for a solid shape. With wall, the sphere becomes a sealed hollow shell
-                  (visible inside only with opacity or from a camera inside).
-        """
-        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius)
-        self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness, opacity=opacity, wall=wall)
-
-    def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
-                 roughness=1, metalness=0):
-        """
-        Add a mesh to the scene
-
-        Args:
-            path: File path to special mesh, relative to this directory
-            cx: Offset in x
-            cy: Offset in y
-            cz: Offset in z
-            rx: Rotation around x-axis
-            ry: Rotation around y-axis
-            rz: Rotation around z-axis
-            sx: Scale along x-axis
-            sy: Scale along y-axis
-            sz: Scale along z-axis
-            r: Red component in [0, 255]
-            g: Green component in [0, 255]
-            b: Blue component in [0, 255]
-            roughness: How rough the material appears. 0.0 means a smooth mirror
-                       reflection, 1.0 means fully diffuse (default 1.0).
-            metalness: How much the material is like a metal. Non-metallic materials
-                       such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
-        """
-        self._scene_code += f'canvas.addMesh("{path}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{r},{g},{b},{roughness},{metalness});\n'
-
-    def add_textured_mesh(self, path, matpath, cx, cy, cz, rx, ry, rz,
-                          sx, sy, sz, shininess):
-        """
-        Add a textured mesh to the scene
-
-        Args:
-            path: File path to mesh, relative to this directory
-            matpath: File path to material, relative to this directory
-            cx: Offset in x
-            cy: Offset in y
-            cz: Offset in z
-            rx: Rotation around x-axis
-            ry: Rotation around y-axis
-            rz: Rotation around z-axis
-            sx: Scale along x-axis
-            sy: Scale along y-axis
-            sz: Scale along z-axis
-            shininess: A number in [0, 255] describing how shiny the mesh is
-        """
-        self._scene_code += f'canvas.addTexturedMesh("{path}","{matpath}",{cx},{cy},{cz},{rx},{ry},{rz},{sx},{sy},{sz},{shininess});\n'
 
     def add_camera(self, x, y, z, rot):
         """

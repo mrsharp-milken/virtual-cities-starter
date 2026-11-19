@@ -503,7 +503,7 @@ Check the `meshes/` folder for available models including animals, people, and o
 
 ## Rotations (Groups)
 
-Create a rotation group using `add_group(x, y, z, rx, ry, rz)`. All objects added to the group rotate together.
+Create a rotation group using `add_group(x, y, z)`, plus optional `rx`, `ry`, and `rz` rotations in degrees (all default to 0). All objects added to the group rotate together.
 
 ### Example: draw_tree
 
