@@ -34,10 +34,145 @@ function setObjectPosRot(obj, x, y, z, rx, ry, rz) {
     obj.rotation.z = e.z;
 }
 
+/** Return value, or fallback if value is undefined (used for optional arguments) */
+function orDefault(value, fallback) {
+    return (value === undefined) ? fallback : value;
+}
+
 function setObjectScale(obj, sx, sy, sz) {
     obj.scale.x = sx;
     obj.scale.y = sy;
     obj.scale.z = sz;
+}
+
+/**
+ * Build a surface of revolution around the y-axis from a list of profile segments.
+ * Each segment is [x0, y0, x1, y1] (x = distance from the axis). The segment's
+ * direction of travel decides which way it faces: the visible side is to the
+ * right of the direction of travel (looking with x to the right and y up).
+ * Every segment gets its own flat profile normal, so rims stay crisp while
+ * curved walls stay smooth around the axis.
+ */
+function makeRevolvedGeometry(segments) {
+    const positions = [];
+    const normals = [];
+    const indices = [];
+    const N = RADIAL_SEGMENTS;
+    for (const [x0, y0, x1, y1] of segments) {
+        const dx = x1 - x0;
+        const dy = y1 - y0;
+        const len = Math.sqrt(dx*dx + dy*dy);
+        const nx = dy/len; // profile normal (nx, ny)
+        const ny = -dx/len;
+        const base = positions.length/3;
+        for (let i = 0; i <= N; i++) {
+            const phi = 2*Math.PI*i/N;
+            const s = Math.sin(phi);
+            const c = Math.cos(phi);
+            positions.push(x0*s, y0, x0*c);
+            normals.push(nx*s, ny, nx*c);
+            positions.push(x1*s, y1, x1*c);
+            normals.push(nx*s, ny, nx*c);
+        }
+        // Pick the triangle winding that faces along the normal
+        const a = new THREE.Vector3(x0*0, y0, x0*1);
+        const b = new THREE.Vector3(x1*0, y1, x1*1);
+        const phi1 = 2*Math.PI/N;
+        const c1 = new THREE.Vector3(x1*Math.sin(phi1), y1, x1*Math.cos(phi1));
+        const d = new THREE.Vector3(x0*Math.sin(phi1), y0, x0*Math.cos(phi1));
+        const est = new THREE.Vector3().crossVectors(c1.clone().sub(a), d.clone().sub(b));
+        const flip = est.dot(new THREE.Vector3(nx*0, ny, nx*1)) < 0;
+        for (let i = 0; i < N; i++) {
+            const A = base + 2*i;     // x0 at phi_i
+            const B = base + 2*i + 1; // x1 at phi_i
+            const C = base + 2*i + 3; // x1 at phi_i+1
+            const D = base + 2*i + 2; // x0 at phi_i+1
+            if (flip) {
+                indices.push(A, C, B, A, D, C);
+            } else {
+                indices.push(A, B, C, A, C, D);
+            }
+        }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+    geometry.setIndex(indices);
+    return geometry;
+}
+
+/** A pipe: open at both ends, wall thickness `wall`, centered on the origin along y */
+function makePipeGeometry(radius, height, wall) {
+    const ri = radius - wall;
+    const h = height/2;
+    return makeRevolvedGeometry([
+        [radius, -h, radius, h],  // outer wall
+        [radius, h, ri, h],       // top rim
+        [ri, h, ri, -h],          // inner wall
+        [ri, -h, radius, -h]      // bottom rim
+    ]);
+}
+
+/** A hollow cone: open at the base, wall thickness `wall` measured across the slanted wall */
+function makeHollowConeGeometry(radius, height, wall) {
+    const h = height/2;
+    const L = Math.sqrt(radius*radius + height*height);
+    // Inner surface is the outer slanted surface shifted inward by `wall`
+    const ri = radius - wall*L/height; // inner radius at the base
+    const t = (radius - wall*height/L)/radius;
+    const apexInner = -h - wall*radius/L + t*height;
+    return makeRevolvedGeometry([
+        [radius, -h, 0, h],        // outer slant
+        [0, apexInner, ri, -h],    // inner slant
+        [ri, -h, radius, -h]       // base rim
+    ]);
+}
+
+/** A square tube: xlen by zlen outside, open at the top and bottom (along y) */
+function makeBoxTubeGeometry(xlen, ylen, zlen, wall) {
+    const hx = xlen/2;
+    const hz = zlen/2;
+    const shape = new THREE.Shape();
+    shape.moveTo(-hx, -hz);
+    shape.lineTo(hx, -hz);
+    shape.lineTo(hx, hz);
+    shape.lineTo(-hx, hz);
+    shape.closePath();
+    const hole = new THREE.Path();
+    hole.moveTo(-hx + wall, -hz + wall);
+    hole.lineTo(-hx + wall, hz - wall);
+    hole.lineTo(hx - wall, hz - wall);
+    hole.lineTo(hx - wall, -hz + wall);
+    hole.closePath();
+    shape.holes.push(hole);
+    const geometry = new THREE.ExtrudeGeometry(shape, {depth: ylen, bevelEnabled: false});
+    // The extrusion runs along z starting at z=0; center it, then point it along y
+    geometry.translate(0, 0, -ylen/2);
+    geometry.rotateX(-Math.PI/2);
+    return geometry;
+}
+
+/** Variant of a material that only draws the faces pointing away from the viewer */
+function getBackMaterial(material) {
+    if (material.side === THREE.DoubleSide) {
+        return material;
+    }
+    if (!material.userData.backVariant) {
+        const back = material.clone();
+        back.side = THREE.BackSide;
+        material.userData.backVariant = back;
+    }
+    return material.userData.backVariant;
+}
+
+/**
+ * Make a mesh into a sealed hollow shell by adding a smaller copy of the shape,
+ * seen only from the inside, as a child. The child shares the parent's transform.
+ */
+function addInnerShell(outer, innerGeometry, material, sx, sy, sz) {
+    const inner = new THREE.Mesh(innerGeometry, getBackMaterial(material));
+    inner.scale.set(sx, sy, sz);
+    outer.add(inner);
 }
 
 class SceneCanvas {
@@ -786,6 +921,16 @@ class SceneCanvas {
     }
 
     /**
+     * Add an object to a group, or directly to the scene if no group is given
+     * @param obj Object to add
+     * @param parentGroupId Optional group ID to add the object to
+     */
+    addToParent(obj, parentGroupId) {
+        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
+        parent.add(obj);
+    }
+
+    /**
      * Add a box to the scene
      * @param cx X center of box
      * @param cy Y center of box
@@ -802,23 +947,23 @@ class SceneCanvas {
      * @param ry Rotation about y-axis, in degrees
      * @param rz Rotation about z-axis, in degrees
      * @param parentGroupId Optional group ID to add this box to
+     * @param wall Optional wall thickness. If given, the shape is hollow
+     * @param closed Optional (with wall): keep every face so the inside is a sealed hollow, instead of open ends
      */
-    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity) {
-        if (rx === undefined) {
-            rx = 0;
-        }
-        if (ry === undefined) {
-            ry = 0;
-        }
-        if (rz === undefined) {
-            rz = 0;
-        }
-        const geometry = new THREE.BoxGeometry(xlen, ylen, zlen);
+    addBox(cx, cy, cz, xlen, ylen, zlen, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity, wall, closed) {
+        rx = orDefault(rx, 0);
+        ry = orDefault(ry, 0);
+        rz = orDefault(rz, 0);
+        const hollow = (wall !== undefined && wall > 0);
+        const geometry = (hollow && !closed) ? makeBoxTubeGeometry(xlen, ylen, zlen, wall)
+                                             : new THREE.BoxGeometry(xlen, ylen, zlen);
         const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const box = new THREE.Mesh(geometry, material);
+        if (hollow && closed) {
+            addInnerShell(box, new THREE.BoxGeometry(xlen - 2*wall, ylen - 2*wall, zlen - 2*wall), material, 1, 1, 1);
+        }
         setObjectPosRot(box, cx, cy, cz, rx, ry, rz);
-        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
-        parent.add(box);
+        this.addToParent(box, parentGroupId);
         return box;
     }
 
@@ -841,33 +986,28 @@ class SceneCanvas {
      * @param sy Scale about y-axis
      * @param sz Scale about z-axis
      * @param parentGroupId Optional group ID to add this cylinder to
+     * @param wall Optional wall thickness. If given, the shape is hollow
+     * @param closed Optional (with wall): keep every face so the inside is a sealed hollow, instead of open ends
          */
-    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity) {
-        if (rx === undefined) {
-            rx = 0;
-        }
-        if (ry === undefined) {
-            ry = 0;
-        }
-        if (rz === undefined) {
-            rz = 0;
-        }
-        if (sx === undefined) {
-            sx = 1;
-        }
-        if (sy === undefined) {
-            sy = 1;
-        }
-        if (sz === undefined) {
-            sz = 1;
-        }
-        const geometry = new THREE.CylinderGeometry(radius, radius, height, RADIAL_SEGMENTS);
+    addCylinder(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity, wall, closed) {
+        rx = orDefault(rx, 0);
+        ry = orDefault(ry, 0);
+        rz = orDefault(rz, 0);
+        sx = orDefault(sx, 1);
+        sy = orDefault(sy, 1);
+        sz = orDefault(sz, 1);
+        const hollow = (wall !== undefined && wall > 0);
+        const geometry = (hollow && !closed) ? makePipeGeometry(radius, height, wall)
+            : new THREE.CylinderGeometry(radius, radius, height, RADIAL_SEGMENTS);
         const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const cylinder = new THREE.Mesh(geometry, material);
+        if (hollow && closed) {
+            addInnerShell(cylinder, new THREE.CylinderGeometry(radius - wall, radius - wall, height - 2*wall, RADIAL_SEGMENTS), material, 1, 1, 1);
+        }
         setObjectPosRot(cylinder, cx, cy, cz, rx, ry, rz);
         setObjectScale(cylinder, sx, sy, sz);
-        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
-        parent.add(cylinder);
+        this.addToParent(cylinder, parentGroupId);
+        return cylinder;
     }
 
     /**
@@ -889,33 +1029,24 @@ class SceneCanvas {
      * @param sy Scale about y-axis
      * @param sz Scale about z-axis
      * @param parentGroupId Optional group ID to add this cone to
+     * @param wall Optional wall thickness. If given, the shape is hollow
      */
-    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity) {
-        if (rx === undefined) {
-            rx = 0;
-        }
-        if (ry === undefined) {
-            ry = 0;
-        }
-        if (rz === undefined) {
-            rz = 0;
-        }
-        if (sx === undefined) {
-            sx = 1;
-        }
-        if (sy === undefined) {
-            sy = 1;
-        }
-        if (sz === undefined) {
-            sz = 1;
-        }
-        const geometry = new THREE.ConeGeometry(radius, height, RADIAL_SEGMENTS);
+    addCone(cx, cy, cz, radius, height, r, g, b, roughness, metalness, rx, ry, rz, sx, sy, sz, parentGroupId, opacity, wall) {
+        rx = orDefault(rx, 0);
+        ry = orDefault(ry, 0);
+        rz = orDefault(rz, 0);
+        sx = orDefault(sx, 1);
+        sy = orDefault(sy, 1);
+        sz = orDefault(sz, 1);
+        const hollow = (wall !== undefined && wall > 0);
+        const geometry = hollow ? makeHollowConeGeometry(radius, height, wall)
+                                : new THREE.ConeGeometry(radius, height, RADIAL_SEGMENTS);
         const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const cone = new THREE.Mesh(geometry, material);
         setObjectPosRot(cone, cx, cy, cz, rx, ry, rz);
         setObjectScale(cone, sx, sy, sz);
-        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
-        parent.add(cone);
+        this.addToParent(cone, parentGroupId);
+        return cone;
     }
 
     /**
@@ -935,25 +1066,21 @@ class SceneCanvas {
      * @param ry Rotation about y-axis, in degrees
      * @param rz Rotation about z-axis, in degrees
      * @param parentGroupId Optional group ID to add this ellipsoid to
+     * @param wall Optional wall thickness. If given, the shape is hollow
      */
-    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity) {
-        if (rx === undefined) {
-            rx = 0;
-        }
-        if (ry === undefined) {
-            ry = 0;
-        }
-        if (rz === undefined) {
-            rz = 0;
-        }
+    addEllipsoid(cx, cy, cz, radx, rady, radz, r, g, b, roughness, metalness, rx, ry, rz, parentGroupId, opacity, wall) {
+        rx = orDefault(rx, 0);
+        ry = orDefault(ry, 0);
+        rz = orDefault(rz, 0);
         const geometry = new THREE.SphereGeometry(1, RADIAL_SEGMENTS, RADIAL_SEGMENTS);
         const material = this.addMaterial(r, g, b, roughness, metalness, opacity);
         const sphere = new THREE.Mesh(geometry, material);
         setObjectPosRot(sphere, cx, cy, cz, rx, ry, rz);
         setObjectScale(sphere, radx, rady, radz);
-        const parent = (parentGroupId !== undefined) ? this.groups[parentGroupId] : this.scene;
-        parent.add(sphere);
-        this.obj = sphere;
+        if (wall !== undefined && wall > 0) {
+            addInnerShell(sphere, geometry, material, (radx - wall)/radx, (rady - wall)/rady, (radz - wall)/radz);
+        }
+        this.addToParent(sphere, parentGroupId);
         return sphere;
     }
 

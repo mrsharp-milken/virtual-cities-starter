@@ -59,6 +59,48 @@ HTML_END = '''<table cellpadding>
 </html>'''
 
 
+def _check_shape(r, g, b, roughness, metalness, opacity, **sizes):
+    """
+    Check the size and appearance arguments shared by all shapes, raising a
+    ValueError that names the bad argument.
+
+    Args:
+        r, g, b: Color components, each in [0, 255]
+        roughness, metalness, opacity: Each in [0, 1]
+        sizes: Named dimensions (e.g. radius=1), each of which must be > 0
+    """
+    for name, value in sizes.items():
+        if not value > 0:
+            raise ValueError(f"{name} must be greater than 0, but you gave {value}")
+    for name, value in (("r", r), ("g", g), ("b", b)):
+        if not 0 <= value <= 255:
+            raise ValueError(f"{name} must be between 0 and 255, but you gave {value}")
+    for name, value in (("roughness", roughness), ("metalness", metalness), ("opacity", opacity)):
+        if not 0 <= value <= 1:
+            raise ValueError(f"{name} must be between 0 and 1, but you gave {value}")
+
+
+def _hollow_args(shape, wall, closed, limit):
+    """
+    Validate the wall/closed options and return them as JavaScript arguments.
+
+    Args:
+        shape: Name of the shape, for error messages
+        wall: Wall thickness, or None for a solid shape
+        closed: Whether the hollow shape keeps all of its faces
+        limit: wall must be strictly less than this (the thinnest half-size)
+    """
+    if wall is None:
+        if closed:
+            raise ValueError(f"closed=True needs a wall thickness, e.g. add_{shape}(..., wall=0.5, closed=True)")
+        return "undefined,false"
+    if wall <= 0:
+        raise ValueError(f"wall must be greater than 0, but you gave {wall}")
+    if wall >= limit:
+        raise ValueError(f"wall={wall} is too thick for this {shape}; it must be less than {limit}")
+    return f"{wall},{'true' if closed else 'false'}"
+
+
 class Group:
     """
     A group for hierarchical transformations. Shapes added to a group
@@ -69,7 +111,7 @@ class Group:
         self._group_id = group_id
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None, closed=False):
         """
         Add a box to the group
 
@@ -92,11 +134,17 @@ class Group:
             rz: Rotation about z-axis, in degrees (default 0)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the box becomes a square tube open
+                  at the top and bottom (along the y-axis); rotate it to point elsewhere.
+            closed: With wall, keep every face so the inside is a sealed hollow
+                    (default False, which leaves the ends open)
         """
-        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, xlen=xlen, ylen=ylen, zlen=zlen)
+        _hollow = _hollow_args("box", wall, closed, min(xlen, ylen, zlen)/2 if closed else min(xlen, zlen)/2)
+        self._scene._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity},{_hollow});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None, closed=False):
         """
         Add a cylinder to the group
 
@@ -121,11 +169,16 @@ class Group:
             sz: Scale about z-axis (default 1)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the cylinder becomes a pipe open at both ends.
+            closed: With wall, keep every face so the inside is a sealed hollow
+                    (default False, which leaves the ends open)
         """
-        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
+        _hollow = _hollow_args("cylinder", wall, closed, min(radius, height/2) if closed else radius)
+        self._scene._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity},{_hollow});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None):
         """
         Add a cone to the group
 
@@ -150,11 +203,14 @@ class Group:
             sz: Scale about z-axis (default 1)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the cone becomes hollow and open at the base.
         """
-        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
+        _hollow = _hollow_args("cone", wall, False, radius*height/(radius**2+height**2)**0.5)
+        self._scene._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},{self._group_id},{opacity},{_hollow});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None):
         """
         Add an ellipsoid to the group
 
@@ -177,10 +233,14 @@ class Group:
             rz: Rotation about z-axis, in degrees (default 0)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the ellipsoid becomes a sealed hollow shell
+                  (visible inside only with opacity or from a camera inside).
         """
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radx=radx, rady=rady, radz=radz)
+        _hollow = _hollow_args("ellipsoid", wall, False, min(radx, rady, radz))
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{self._group_id},{opacity},{_hollow});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1, wall=None):
         """
         Add a sphere to the group
 
@@ -198,9 +258,13 @@ class Group:
                        such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the sphere becomes a sealed hollow shell
+                  (visible inside only with opacity or from a camera inside).
         """
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius)
+        _hollow = _hollow_args("sphere", wall, False, radius)
         # Call add_ellipsoid directly with group_id
-        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id},{opacity});\n"
+        self._scene._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radius},{radius},{radius},{r},{g},{b},{roughness},{metalness},0,0,0,{self._group_id},{opacity},{_hollow});\n"
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
                  roughness=1, metalness=0):
@@ -276,7 +340,7 @@ class Scene3D:
         self._next_group_id = 0
 
     def add_box(self, cx, cy, cz, xlen, ylen, zlen, r, g, b,
-                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
+                roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None, closed=False):
         """
         Add a box to the scene
 
@@ -299,11 +363,17 @@ class Scene3D:
             rz: Rotation about z-axis, in degrees (default 0)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the box becomes a square tube open
+                  at the top and bottom (along the y-axis); rotate it to point elsewhere.
+            closed: With wall, keep every face so the inside is a sealed hollow
+                    (default False, which leaves the ends open)
         """
-        self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, xlen=xlen, ylen=ylen, zlen=zlen)
+        _hollow = _hollow_args("box", wall, closed, min(xlen, ylen, zlen)/2 if closed else min(xlen, zlen)/2)
+        self._scene_code += f"canvas.addBox({cx},{cy},{cz},{xlen},{ylen},{zlen},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity},{_hollow});\n"
 
     def add_cylinder(self, cx, cy, cz, radius, height, r, g, b,
-                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
+                     roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None, closed=False):
         """
         Add a cylinder to the scene
 
@@ -328,11 +398,16 @@ class Scene3D:
             sz: Scale about z-axis (default 1)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the cylinder becomes a pipe open at both ends.
+            closed: With wall, keep every face so the inside is a sealed hollow
+                    (default False, which leaves the ends open)
         """
-        self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
+        _hollow = _hollow_args("cylinder", wall, closed, min(radius, height/2) if closed else radius)
+        self._scene_code += f"canvas.addCylinder({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity},{_hollow});\n"
 
     def add_cone(self, cx, cy, cz, radius, height, r, g, b,
-                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1):
+                 roughness=1, metalness=0, rx=0, ry=0, rz=0, sx=1, sy=1, sz=1, opacity=1, wall=None):
         """
         Add a cone to the scene
 
@@ -357,11 +432,14 @@ class Scene3D:
             sz: Scale about z-axis (default 1)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the cone becomes hollow and open at the base.
         """
-        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius, height=height)
+        _hollow = _hollow_args("cone", wall, False, radius*height/(radius**2+height**2)**0.5)
+        self._scene_code += f"canvas.addCone({cx},{cy},{cz},{radius},{height},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},{sx},{sy},{sz},undefined,{opacity},{_hollow});\n"
 
     def add_ellipsoid(self, cx, cy, cz, radx, rady, radz, r, g, b,
-                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1):
+                      roughness=1, metalness=0, rx=0, ry=0, rz=0, opacity=1, wall=None):
         """
         Add an ellipsoid to the scene
 
@@ -384,10 +462,14 @@ class Scene3D:
             rz: Rotation about z-axis, in degrees (default 0)
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the ellipsoid becomes a sealed hollow shell
+                  (visible inside only with opacity or from a camera inside).
         """
-        self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity});\n"
+        _check_shape(r, g, b, roughness, metalness, opacity, radx=radx, rady=rady, radz=radz)
+        _hollow = _hollow_args("ellipsoid", wall, False, min(radx, rady, radz))
+        self._scene_code += f"canvas.addEllipsoid({cx},{cy},{cz},{radx},{rady},{radz},{r},{g},{b},{roughness},{metalness},{rx},{ry},{rz},undefined,{opacity},{_hollow});\n"
 
-    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1):
+    def add_sphere(self, cx, cy, cz, radius, r, g, b, roughness=1, metalness=0, opacity=1, wall=None):
         """
         Add a sphere to the scene
 
@@ -405,8 +487,11 @@ class Scene3D:
                        such as wood or stone use 0.0, metallic use 1.0 (default 0.0).
             opacity: How see-through the shape is. 0.0 is invisible, 1.0 is fully
                      solid (default 1.0). Transparent shapes are visible from both sides.
+            wall: Wall thickness. Leave out for a solid shape. With wall, the sphere becomes a sealed hollow shell
+                  (visible inside only with opacity or from a camera inside).
         """
-        self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness, opacity=opacity)
+        _check_shape(r, g, b, roughness, metalness, opacity, radius=radius)
+        self.add_ellipsoid(cx, cy, cz, radius, radius, radius, r, g, b, roughness, metalness, opacity=opacity, wall=wall)
 
     def add_mesh(self, path, cx, cy, cz, rx, ry, rz, sx, sy, sz, r, g, b,
                  roughness=1, metalness=0):

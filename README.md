@@ -161,7 +161,7 @@ The `Scene3D` class provides methods for drawing various shapes. Here are the ma
 scene.add_box(0, 2, -6, 1, 4, 1, 0, 255, 0)
 ```
 
-Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`, see [Material Properties](#material-properties))
+Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `roughness`, `metalness`, `opacity`, `wall`, and `closed`, see [Material Properties](#material-properties) and [Hollow Shapes](#hollow-shapes))
 
 ![Box Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Box.png)
 
@@ -172,7 +172,7 @@ Parameters: `add_box(cx, cy, cz, xlen, ylen, zlen, r, g, b)` (plus optional `rou
 scene.add_cylinder(0, 1, -2, 0.5, 2, 255, 255, 0)
 ```
 
-Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
+Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, `opacity`, `wall`, and `closed`, see [Hollow Shapes](#hollow-shapes))
 
 ![Cylinder Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cylinder.png)
 
@@ -183,7 +183,7 @@ Parameters: `add_cylinder(cx, cy, cz, radius, height, r, g, b)` (plus optional `
 scene.add_cone(4, 0, 0, 0.5, 6, 0, 0, 255)
 ```
 
-Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
+Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roughness`, `metalness`, `opacity`, and `wall`, see [Hollow Shapes](#hollow-shapes))
 
 ![Cone Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Cone.png)
 
@@ -194,7 +194,7 @@ Parameters: `add_cone(cx, cy, cz, radius, height, r, g, b)` (plus optional `roug
 scene.add_sphere(-4, 4, 0, 1, 0, 255, 255)
 ```
 
-Parameters: `add_sphere(cx, cy, cz, radius, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
+Parameters: `add_sphere(cx, cy, cz, radius, r, g, b)` (plus optional `roughness`, `metalness`, `opacity`, and `wall`, see [Hollow Shapes](#hollow-shapes))
 
 ![Sphere Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Sphere.png)
 
@@ -207,7 +207,7 @@ An ellipsoid is a stretched sphere with different radii along each axis.
 scene.add_ellipsoid(0, 5, -10, 1, 2, 1, 255, 0, 0)
 ```
 
-Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optional `roughness`, `metalness`, and `opacity`)
+Parameters: `add_ellipsoid(cx, cy, cz, radx, rady, radz, r, g, b)` (plus optional `roughness`, `metalness`, `opacity`, and `wall`, see [Hollow Shapes](#hollow-shapes))
 
 ![Ellipsoid Example](http://nifty.stanford.edu/2024/tralie-vrtual-cities/Ellipsoid.png)
 
@@ -229,6 +229,43 @@ scene.add_sphere(0, 1, -5, 1, 127, 127, 127, roughness=0.1, metalness=1)
 
 # A half-transparent blue box
 scene.add_box(0, 1, -5, 2, 2, 2, 0, 100, 255, opacity=0.5)
+```
+
+---
+
+## Hollow Shapes
+
+Give a shape a `wall` thickness and it becomes hollow instead of solid. You can look inside a hollow shape, and put the camera inside one.
+
+```python
+# A 5 x 5 x 5 box with a 4 x 4 square hole running from top to bottom (like a box beam)
+scene.add_box(0, 2.5, -6, 5, 5, 5, 180, 180, 190, wall=0.5)
+
+# The same beam lying on its side (rotate it to point the hole somewhere else)
+scene.add_box(0, 2.5, -6, 5, 5, 5, 180, 180, 190, wall=0.5, rz=90)
+
+# A pipe with open ends
+scene.add_cylinder(0, 1, -6, 1, 4, 120, 120, 130, wall=0.2)
+```
+
+- **wall**: How thick the walls are. Leave it out for a solid shape. It has to be less than half of the shape's thinnest width (or less than the radius), otherwise you'll get an error telling you the maximum.
+- **closed** (boxes and cylinders only): By default a hollow box is open at the top and bottom, and a hollow cylinder is open at both ends. Use `closed=True` to keep every face so the inside is a sealed room.
+
+How each shape turns out:
+
+| Shape | With `wall` | With `wall` and `closed=True` |
+|---|---|---|
+| Box | Square tube, open at the top and bottom | Sealed hollow box |
+| Cylinder | Pipe, open at both ends | Sealed hollow cylinder |
+| Cone | Hollow, open at the base | (not available) |
+| Sphere / ellipsoid | Sealed hollow shell | (always sealed) |
+
+A sealed hollow shape looks solid from outside, so you only see the inside with `opacity` below 1, or by putting the camera inside it. That makes a sealed hollow box a handy room:
+
+```python
+# A 20 x 10 x 20 room with the camera inside it
+scene.add_camera(0, 0, 0, 0)
+scene.add_box(0, 0, 0, 20, 10, 20, 200, 120, 120, wall=1, closed=True)
 ```
 
 ---
